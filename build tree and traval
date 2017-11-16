@@ -1,0 +1,312 @@
+#include <stdio.h>
+#include <stdlib.h>
+#define NullInput '0'
+#define maxSize 20
+//typedef int *element1;//指针类型的变量，队列里边存储的是指针
+
+typedef struct treenode *ptrTotreenode;
+typedef ptrTotreenode tree;
+//二叉树结点的结构
+typedef char element2;
+struct treenode
+{
+    element2 data;
+    struct treenode *lchild;
+    struct treenode *rchild;
+};
+typedef struct treenode *tree;
+
+typedef struct QNode *PtrToQNode;
+typedef int position ;
+typedef tree element1;//!!!!好好理解！！
+struct QNode{
+    element1 data1[maxSize];//存储元素的数组,数组里边放的全部都是指针
+    position front,rear;//队列的头尾指针
+};
+typedef PtrToQNode queue;//没有*不行？？？
+//把队列的名字叫做queue
+
+
+queue CreatQueue();
+void addQ(queue Q,element1 x);
+int isEmpety(queue Q);
+element1 deleteQ(queue Q);
+int Isfull(queue Q);
+tree creatTree1();//层序遍历创建树
+void preOrderTraversal(tree t);//先序遍历，打印
+void MiddleTraversal(tree BT);//中序遍历，打印输出
+void PostTraversal(tree BT);
+void layerTraversal(tree BT);//层序遍历，打印
+void InpreOrderTraversal(tree BT);//
+int main()
+{
+    tree BT;
+    //BT=(tree)malloc(sizeof(struct treenode));
+    //BT=tree creatTree1();//!!!你在干嘛！！
+    BT=creatTree1();
+    printf("先序遍历:");
+    preOrderTraversal(BT);
+    printf("\n");
+    printf("中序遍历:");
+    MiddleTraversal(BT);
+    printf("\n");
+    printf("后序遍历:");
+    PostTraversal(BT);
+    printf("\n");
+    printf("层序遍历:");
+    layerTraversal(BT);
+    printf("\n");
+    printf("非递归先序遍历:");
+    InpreOrderTraversal(BT);
+    printf("\n");
+    return 0;
+}
+
+//创建空队列
+queue CreatQueue(){
+    queue Q=(queue)malloc((sizeof(struct QNode)));
+    //Q->data=(element *)malloc(maxSize*sizeof(element));//???
+    Q->front=Q->rear=0;
+    //Q->maxSize=maxSize;
+    return Q;
+}
+
+//列队是不是满的
+int Isfull(queue Q){
+    if((Q->rear+1)%maxSize==Q->front)
+        return 1;
+    else
+        return 0;
+}
+
+//添加新队列
+void addQ(queue Q,element1 x){
+    /*printf("\n");
+    printf("rear:%d\n",Q->rear);
+    printf("front:%d\n",Q->front);*/
+    if(Isfull(Q)){
+        printf("列队满");
+        exit(0);
+    }else{
+        Q->rear=(Q->rear+1)%maxSize;
+        Q->data1[Q->rear]=x;
+        //printf("进来一个元素\n");
+    }
+    /*printf("rear:%d\n",Q->rear);
+    printf("front:%d\n",Q->front);
+    printf("本次添加结束\n");
+     printf("\n");*/
+}
+
+//判断队列是否为空
+int isEmpety(queue Q){
+    if(Q->front==Q->rear){
+        //printf("队列空了");
+        return 1;
+    }
+    else{
+        //printf("队列不空");
+        return 0;
+    }
+
+}
+
+//删除队列中的元素,返回弹出的地址
+element1 deleteQ(queue Q){
+    /*printf("\n");
+    printf("rear:%d\n",Q->rear);
+    printf("front:%d\n",Q->front);*/
+    if(isEmpety(Q)){
+        printf("队列空");
+        exit(0);
+    }else{
+    //printf("出去一个元素\n");
+    Q->front=(Q->front+1)%(maxSize);//删掉前的地址
+    return Q->data1[Q->front];//返回的是一个队列里的元素，即一个地址
+    /*printf("\n");
+    printf("rear:%d\n",Q->rear);
+    printf("front:%d\n",Q->front);*/
+    }
+
+}
+
+
+//使用层序遍历构建树
+tree creatTree1(){
+    tree BT,T;//构造头结点
+    element2 data;
+    queue Q=CreatQueue();//创建一个空的队列
+
+    FILE *fp;
+    if((fp=fopen("E://数据结构//实验2//text.txt","r"))==NULL){
+        printf("fail to open");
+        exit(0);
+    }
+
+    fscanf(fp,"%c\n",&data);
+    //printf("我被执行啦hhh");可以被执行
+    //printf("%c",data);
+    //判断是否真的有是在创建一棵树
+    if(data!=NullInput){
+        BT=(tree)malloc(sizeof(struct treenode));
+        BT->data=data;//把读入的信息写进头结点的data域
+        BT->lchild=BT->rchild=NULL;//左右儿子先搁置着NULL
+        addQ(Q,BT);//把BT放入新创建的Q队列里
+    }else
+    return NULL;
+    //队列不空就一直做执行
+    while(!isEmpety(Q)){//写成了if，！！检查了好久
+        T=deleteQ(Q);
+
+        //为左儿子申请空间
+        T->lchild=(tree)malloc(sizeof(struct treenode));
+        fscanf(fp,"%c\n",&data);//读入左儿子的数据
+        if(data!=NullInput){
+        T->lchild->lchild=T->lchild->rchild=NULL;//左儿子的左儿子和右儿子
+        T->lchild->data=data;
+        addQ(Q,T->lchild);//
+        }else T->lchild=NULL;
+
+        //为右儿子申请空间
+        T->rchild=(tree)malloc(sizeof(struct treenode));
+        fscanf(fp,"%c\n",&data);//读入右儿子的数据
+        if(data!=NullInput){
+        T->rchild->lchild=T->rchild->rchild=NULL;
+        T->rchild->data=data;
+        addQ(Q,T->rchild);
+        }else T->rchild=NULL;
+    }
+    return BT;
+}
+
+//先序遍历，打印
+void preOrderTraversal(tree BT){
+    if(BT){
+        printf("%c",BT->data);
+        preOrderTraversal(BT->lchild);
+        preOrderTraversal(BT->rchild);
+    }
+}
+
+//中序遍历，打印
+void MiddleTraversal(tree BT){
+    //printf("我被执行啦");
+    //printf("%d",t->data);
+    if(BT){
+        MiddleTraversal(BT->lchild);//preOrderTraversal(BT->lchild);
+        printf("%c",BT->data);
+        MiddleTraversal(BT->rchild);
+    }
+}
+//后序遍历，打印
+void PostTraversal(tree BT){
+    //printf("我被执行啦");
+    //printf("%d",t->data);
+    if(BT){
+        PostTraversal(BT->lchild);
+        PostTraversal(BT->rchild);
+        printf("%c",BT->data);
+    }
+}
+
+//层序遍历打印二叉树
+void layerTraversal(tree BT){
+    tree T;
+    queue Q =CreatQueue();
+    addQ(Q,BT);//先把头结点放进去
+    //把队列里边的元素都打印出来
+    while(!isEmpety(Q)){
+        T=deleteQ(Q);
+        printf("%c",T->data);//打印出这个地址的数据data信息
+        if(T->lchild) addQ(Q,T->lchild);
+        if(T->rchild) addQ(Q,T->rchild);
+    }
+}
+
+//非递归算法的先序遍历
+void InpreOrderTraversal(tree BT){
+    tree T=BT;
+    queue Q =CreatQueue();
+    addQ(Q,BT);//先把头结点放进去
+    while(!isEmpety(Q) || BT){
+      //一直把左边的压进队列
+       while(T){
+            printf("%c",T->data);
+            addQ(Q,T);
+            //printf("%c",T->data);
+            T=T->lchild;
+       }
+       if(!isEmpety(Q)){
+        T=deleteQ(Q);
+        //printf("%c",T->data);
+        T=T->rchild;
+       }
+    }
+}
+/*
+//递归：按照先序序列建立链式二叉树
+tree creatBTree1(string data)
+{
+    tree t;
+    int count=0;
+    if(data[count]=='#') t=NULL;
+    else{
+        t=(tree)malloc(sizeof(struct treenode));
+        t->data=data[count];//把数据放进data
+        count++;
+        creatBTree(t->lchild);
+        creatBTree(t->rchild);
+    }
+*/
+
+/*
+//非递归的方法建立二叉树
+tree creatBTree2(string data)
+{
+    tree t;
+    int count=0;
+    for(i=0;data[i]!='\0';i++){
+        if(data[i]=='#'){
+             t=(tree)malloc(sizeof(struct treenode));
+             t=NULL;
+        }
+        else{
+        t=(tree)malloc(sizeof(struct treenode));
+        t->data=data[count];//把数据放进data
+        count++;
+        creatBTree(t->lchild);
+        creatBTree(t->rchild);
+        }
+    }
+}
+
+*/
+
+/*
+tree biuld(tree t){
+    tree root;
+    int i;char n;
+    scanf("%d",&n);//有多少个结点
+    int treck[10];
+    for(i=0;i<n;i++) treck[i]=0;
+    for(i=0;i<n;i++){
+    scanf("%c %c %c\n",&tree[i].element,&left,&right);
+    if(left!='-'){
+        tree[i].element=left-'0';
+        treck[tree[i].element]=1;
+    }else
+     treck[tree[i].element]=0;
+
+    if(right!='-'){
+        tree[i].element=right-'0';
+        treck[tree[i].element]=1;
+    }else
+     treck[tree[i].element]=0;
+    }
+    for(i=0;i<n;i++){
+        if(!trect[i])
+            break;
+    }
+    root=i;
+    return root;
+}*/
