@@ -3,7 +3,7 @@
 #define NullInput '0'
 #define maxSize 20
 //typedef int *element1;//指针类型的变量，队列里边存储的是指针
-
+typedef enum{Link = 0,Thread = 1}PointTag;
 typedef struct treenode *ptrTotreenode;
 typedef ptrTotreenode tree;
 //二叉树结点的结构
@@ -13,6 +13,7 @@ struct treenode
     element2 data;
     struct treenode *lchild;
     struct treenode *rchild;
+    int ltag,rtag;//没有使用也可以放在结构体内
 };
 typedef struct treenode *tree;
 
@@ -38,9 +39,13 @@ void MiddleTraversal(tree BT);//中序遍历，打印输出
 void PostTraversal(tree BT);
 void layerTraversal(tree BT);//层序遍历，打印
 void InpreOrderTraversal(tree BT);//
+void InmiddleTraversal(tree BT);//非递归算法的中序遍历
+void creatMiddleTree(tree BT);//创建中序线索二叉树
+tree addHead(tree BT);//添加了head的二叉树
+void middleTreetravalByMiddle(tree head);//中序访问中序线索二叉树
 int main()
 {
-    tree BT;
+    tree BT,head;
     //BT=(tree)malloc(sizeof(struct treenode));
     //BT=tree creatTree1();//!!!你在干嘛！！
     BT=creatTree1();
@@ -58,6 +63,14 @@ int main()
     printf("\n");
     printf("非递归先序遍历:");
     InpreOrderTraversal(BT);
+    printf("\n");
+    printf("非递归中序遍历:");
+    //InmiddleTraversal(BT);
+    printf("\n");
+    printf("打印出二叉树变成线索二叉树需要增添的连接:\n");
+    head=addHead(BT);//添加了head的二叉树
+    printf("线索二叉树中序遍历:");
+    middleTreetravalByMiddle(head);//中序访问中序线索二叉树
     printf("\n");
     return 0;
 }
@@ -227,14 +240,39 @@ void layerTraversal(tree BT){
 void InpreOrderTraversal(tree BT){
     tree T=BT;
     queue Q =CreatQueue();
-    addQ(Q,BT);//先把头结点放进去
-    while(!isEmpety(Q) || BT){
+    //addQ(Q,BT);//先把头结点放进去
+    //开始的时候不要放进结点
+    while(!isEmpety(Q)||T){
       //一直把左边的压进队列
        while(T){
-            printf("%c",T->data);
+            addQ(Q,T);
+            T=T->lchild;
+            //printf("a");
+            //printf("%c",T->data);
+       }
+       if(!isEmpety(Q)){
+        T=deleteQ(Q);
+        printf("%c",T->data);
+        T=T->rchild;
+       }
+    }
+}
+
+//!!需要修改！！
+//非递归算法的中序遍历
+void InmiddleTraversal(tree BT){
+    tree T=BT;
+    queue Q =CreatQueue();
+    //addQ(Q,BT);//先把头结点放进去
+    //开始的时候不要放进结点
+    while(!isEmpety(Q)||T){
+      //一直把左边的压进队列
+       while(T){
             addQ(Q,T);
             //printf("%c",T->data);
             T=T->lchild;
+            //printf("a");
+            //printf("%c",T->data);
        }
        if(!isEmpety(Q)){
         T=deleteQ(Q);
@@ -243,6 +281,92 @@ void InpreOrderTraversal(tree BT){
        }
     }
 }
+
+/*给树创建一个头节点head
+先把BT这棵树线索化了，再去考虑添加头结点
+*/
+tree pre=NULL;
+
+//把头结点加上，顺道调用线索二叉树
+tree addHead(tree BT){
+  tree head;//要申请一个空间啊！！
+  head=(tree)malloc(sizeof(struct treenode));
+  if(!head){
+    printf("申请不成功");
+    exit(0);//没有申请成功跳出来
+  }
+  head->rchild=head;//右指针回指
+  head->rtag=1;
+  head->data='#';
+  if(!BT)
+    head->lchild=head;//左指针指向根节点
+  else{
+     head->lchild=BT;//左指针指向根节点
+     pre=head;//全局变量的前驱指针指向head
+     creatMiddleTree(BT);
+     pre->rchild=head;
+     pre->rtag=Thread;
+     head->rchild=pre;
+  }
+  return head;
+}
+
+//创建中序线索二叉树，无头结点
+void creatMiddleTree(tree BT){
+    tree F;
+  if(BT != NULL)
+    {
+        creatMiddleTree(BT->lchild);
+        if(BT->lchild == NULL)
+        {
+            F=BT;
+            BT->lchild = pre; //如果该节点没有左孩子，则将该节点的左指针指向其中序前驱
+            printf("%c左儿子连接到%c\n",F->data,pre->data);
+            BT->ltag = Thread;//要连接的是1
+        }else{
+            BT->ltag = Link;
+        }
+        //如果该节点没有右儿子的时候
+        if (pre != NULL && pre->rchild == NULL)
+        {
+            F=pre;
+            pre->rchild = BT;
+            //现在的BT是pre的后继结点，因为调用是从根开始的，一直剥到叶子
+            printf("%c右儿子连接到%c\n",F->data,BT->data);
+            pre->rtag = Thread;
+        }
+        pre = BT;
+        //if (pre->rchild == NULL && pre->rtag == Link)
+        if (pre->rchild == NULL )
+            //因为不是创建的时候已经全部默认为链接故可以不用
+        {
+            pre->rtag = Thread;
+        }
+        creatMiddleTree(BT->rchild);
+    }
+}
+
+//中序访问中序线索二叉树
+void middleTreetravalByMiddle(tree head){
+    tree p=head->lchild;//p指向根节点
+    while(p!=head){//书遍历完会使p==NULL
+        //printf("%d",p->ltag);无存储内容
+        while(p->ltag==Link){
+            p=p->lchild;
+        }
+        //printf("我被执行啦");
+        printf("%c",p->data);
+        while(p->rtag==Thread && p->rchild!=head){
+            p=p->rchild;
+            printf("%c",p->data);
+        }
+        p=p->rchild;
+    }
+}
+
+
+
+
 
 
 
